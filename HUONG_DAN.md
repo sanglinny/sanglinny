@@ -97,7 +97,7 @@ node render.js --city tokyo --draw 40 --color 40 --orbit 10 --music nhac.mp3
 Tùy chọn: `--draw/--color/--pop/--orbit/--hook/--rewind` (giây), `--speed x16` (chữ trên huy hiệu), `--music`, `--w/--h`.
 Xem nhanh bản nháp: `--w 960 --h 540 --every 10` (chỉ render 1/10 khung hình).
 
-Thành phố 3D có sẵn: `paris`, `london`, `tokyo`, `hanoi` — sửa/thêm trong `city3d/cities.js`
+Thành phố 3D có sẵn: `newyork` (bản "cả thành phố": 4 landmark + cầu Brooklyn + ~45 tòa nhà, ~2 phút 15 giây), `paris`, `london`, `tokyo`, `hanoi` — sửa/thêm trong `city3d/cities.js`
 (landmark 3D: `eiffel`, `clockTower`, `pagoda`, `mountain`, `ferrisWheel`, `domeChurch`, `turtleTower`, nhà phố tự sinh `rowOfBuildings`).
 
 Thời gian render (CPU, không GPU): khoảng 0.4–0.6 giây/khung hình ở 1080p → video 75 giây mất ~20 phút. Máy có GPU sẽ nhanh hơn nhiều.

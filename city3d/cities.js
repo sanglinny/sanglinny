@@ -9,11 +9,13 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 
-const SPINE = 0.3, ZBOT = 4.4;
-let X0 = -7.4, X1 = 7.4, ZTOP = -4.3;
+const SPINE = 0.3;
+let X0 = -7.4, X1 = 7.4, ZTOP = -4.3, ZBOT = 4.4;
 export const LAYOUT = { X0, X1, ZTOP, ZBOT };
-export function setLayout(short) {            // 9:16 = narrower paper, taller sky
+export function setLayout(short, custom) {    // 9:16 = narrower paper, taller sky
   if (short) { X0 = -4.3; X1 = 4.3; ZTOP = -8.2; }
+  const c = custom && custom[short ? 'short' : 'wide'];
+  if (c) ({ X0 = X0, X1 = X1, ZTOP = ZTOP, ZBOT = ZBOT } = c);
   Object.assign(LAYOUT, { X0, X1, ZTOP, ZBOT });
 }
 
@@ -306,7 +308,196 @@ function standardCity(api, cfg) {
   if (cfg.boat) boat(api, cfg.boat, 3.95);
 }
 
+
+// ------------------------------------------------------------- New York
+function stripes(w, h, y0, z, cols, rowsH = .5) {   // window bands on a facade
+  const g = [];
+  const n = Math.max(1, Math.floor((h - .3) / rowsH));
+  for (let i = 0; i < n; i++) for (let c = 0; c < cols; c++)
+    g.push(box(w / cols * .55, rowsH * .55, .04, -w / 2 + (c + .5) * w / cols, y0 + .25 + i * rowsH + rowsH * .3, z));
+  return g;
+}
+
+function skyscraper(api, x, z, w, h, d, o, r) {
+  const { makePiece, addMesh } = api;
+  const p = makePiece(x, z, { order: o.order, popOrder: o.popOrder ?? z + r() * .4 });
+  const tiers = h > 3.2 && r() < .65 ? 2 + Math.floor(r() * 2) : 1;
+  let y = 0, ww = w, dd = d;
+  const bodies = [], wins = [];
+  for (let t = 0; t < tiers; t++) {
+    const th = tiers === 1 ? h : (t === 0 ? h * .6 : h * .4 / (tiers - 1));
+    bodies.push(box(ww, th, dd, 0, y + th / 2, -d / 2));
+    wins.push(...stripes(ww, th, y, -d / 2 + dd / 2 + .02, Math.max(2, Math.round(ww / .22)), o.glass ? .35 : .42));
+    y += th; ww *= .78; dd *= .8;
+  }
+  addMesh(p, merge(bodies), o.wall, [0, 0, 0], { order: o.order });
+  addMesh(p, merge(wins), o.win, [0, 0, 0], { order: o.order + 1 });
+  if (r() < .45) addMesh(p, frustum(.015, .03, .5 + r() * .5, 4, 0, y, -d / 2), '#555', [0, 0, 0], { order: o.order + 2, threshold: 50 });
+  return p;
+}
+
+function skylineRow(api, r, z, d, hr, x0, x1, o, skip = []) {
+  let x = x0;
+  while (x < x1 - .3) {
+    const w = Math.min(x1 - x, o.wMin + r() * (o.wMax - o.wMin));
+    if (w < .35) break;
+    const cx = x + w / 2;
+    if (!skip.some(([a, b]) => cx > a && cx < b)) {
+      const h = hr[0] + r() * (hr[1] - hr[0]);
+      const glass = r() < .35;
+      skyscraper(api, cx, z, w, h, d, { ...o, glass, wall: glass ? pick(r, o.glassWalls) : pick(r, o.walls), win: glass ? '#cfe8ff' : o.win }, r);
+    }
+    x += w + .03 + r() * .06;
+  }
+}
+
+function empireState(api, x, z, s = 1) {
+  const { makePiece, addMesh } = api;
+  const p = makePiece(x, z, { order: 10, popOrder: -3 });
+  const st = '#d9cbb0', D = .75 * s, cz = -D / 2;
+  const tiers = [[1.5, 1.2], [1.15, 3.0], [.85, 1.0], [.62, .6], [.45, .35]];
+  let y = 0; const bodies = [], wins = [];
+  for (const [w, h] of tiers) {
+    bodies.push(box(w * s, h * s, D * w / 1.5 + .05, 0, y + h * s / 2, cz));
+    wins.push(...stripes(w * s, h * s, y, cz + (D * w / 1.5 + .05) / 2 + .02, Math.max(2, Math.round(w * s / .16)), .3));
+    y += h * s;
+  }
+  addMesh(p, merge(bodies), st, [0, 0, 0], { order: 10 });
+  addMesh(p, merge(wins), '#7f8fa6', [0, 0, 0], { order: 11 });
+  addMesh(p, frustum(.12 * s, .2 * s, .5 * s, 8, 0, y, cz), '#c7c9cc', [0, 0, 0], { order: 12, threshold: 50 });
+  addMesh(p, frustum(.01 * s, .05 * s, 1.0 * s, 4, 0, y + .5 * s, cz), '#888', [0, 0, 0], { order: 12, threshold: 50 });
+}
+
+function chrysler(api, x, z, s = 1) {
+  const { makePiece, addMesh } = api;
+  const p = makePiece(x, z, { order: 12, popOrder: -2 });
+  const D = .7 * s, cz = -D / 2;
+  addMesh(p, merge([box(1.25 * s, 2.0 * s, D, 0, 1.0 * s, cz), box(.95 * s, 2.6 * s, D * .8, 0, 3.3 * s, cz)]), '#cfd3d8', [0, 0, 0], { order: 12 });
+  addMesh(p, merge([...stripes(1.25 * s, 2.0 * s, 0, cz + D / 2 + .02, 6, .3), ...stripes(.95 * s, 2.6 * s, 2.0 * s, cz + D * .4 + .02, 5, .3)]), '#6f7d8c', [0, 0, 0], { order: 13 });
+  // stacked art-deco crown with sunburst arches
+  const crown = [], arches = [];
+  let y = 4.6 * s;
+  for (let i = 0; i < 5; i++) {
+    const w = (.8 - i * .14) * s;
+    crown.push(box(w, .38 * s, w * .7, 0, y + .19 * s, cz));
+    arches.push(new THREE.TorusGeometry(w * .42, .03 * s, 3, 10, Math.PI).translate(0, y + .02, cz + w * .35 + .02));
+    y += .38 * s;
+  }
+  addMesh(p, merge(crown), '#e3e6ea', [0, 0, 0], { order: 14 });
+  addMesh(p, merge(arches), '#8a96a3', [0, 0, 0], { order: 15, threshold: 50 });
+  const tri = [];
+  for (let i = 0; i < 4; i++) tri.push(box(.07 * s, .1 * s, .04, (-.3 + i * .2) * s * (1 - .1 * i), 4.8 * s + i * .38 * s, cz + .4 * s));
+  addMesh(p, frustum(.005 * s, .07 * s, 1.3 * s, 4, 0, y, cz), '#d0d4d9', [0, 0, 0], { order: 16, threshold: 50 });
+}
+
+function oneWTC(api, x, z, s = 1) {
+  const { makePiece, addMesh } = api;
+  const p = makePiece(x, z, { order: 14, popOrder: -2.5 });
+  const D = .95 * s, cz = -D / 2;
+  addMesh(p, box(1.25 * s, .8 * s, D, 0, .4 * s, cz), '#9fb7c9', [0, 0, 0], { order: 14 });
+  // tapering glass tower: square frustum twisted 45 degrees -> octagon facets
+  const g = new THREE.CylinderGeometry(.35 * s, .88 * s, 6.6 * s, 4, 1);
+  g.rotateY(Math.PI / 4).translate(0, .8 * s + 3.3 * s, cz);
+  const pos = g.attributes.position;
+  for (let i = 0; i < pos.count; i++) if (pos.getY(i) > .8 * s + 3.3 * s) {  // top ring rotated 45deg
+    const vx = pos.getX(i), vz = pos.getZ(i) - cz, a = Math.PI / 4, c = Math.cos(a), sn = Math.sin(a);
+    pos.setXYZ(i, vx * c - vz * sn, pos.getY(i), cz + vx * sn + vz * c);
+  }
+  g.computeVertexNormals();
+  addMesh(p, g, '#8fc1e3', [0, 0, 0], { order: 15, threshold: 15 });
+  addMesh(p, box(.48 * s, .2 * s, .48 * s, 0, 7.5 * s, cz), '#b8c6d1', [0, 0, 0], { order: 16 });
+  addMesh(p, frustum(.01 * s, .05 * s, 1.7 * s, 6, 0, 7.6 * s, cz), '#cfd8dc', [0, 0, 0], { order: 16, threshold: 50 });
+}
+
+function liberty(api, x, z, s = 1) {
+  const { makePiece, addMesh } = api;
+  const p = makePiece(x, z, { order: 9, popOrder: -4 });
+  const cz = -.6 * s, G = '#6fb59a';
+  addMesh(p, new THREE.CylinderGeometry(1.25 * s, 1.35 * s, .2, 12).scale(1, 1, .7).translate(0, .1, cz), '#7cbf6a', [0, 0, 0], { order: 9, threshold: 40 });
+  addMesh(p, merge([frustum(.5 * s, .62 * s, .3 * s, 4, 0, .2, cz), frustum(.36 * s, .42 * s, .9 * s, 4, 0, .2 + .3 * s, cz)]), '#d8c7a3', [0, 0, 0], { order: 9 });
+  const y0 = .2 + 1.2 * s;
+  const body = [frustum(.16 * s, .3 * s, 1.15 * s, 7, 0, y0, cz),            // robe
+                new THREE.IcosahedronGeometry(.12 * s, 0).translate(0, y0 + 1.27 * s, cz),   // head
+                beam([.12 * s, y0 + 1.0 * s, cz], [.3 * s, y0 + 1.75 * s, cz], .045 * s),   // raised arm
+                beam([-.12 * s, y0 + .9 * s, cz], [-.24 * s, y0 + .7 * s, cz + .05], .04 * s), // tablet arm
+                box(.12 * s, .22 * s, .05 * s, -.26 * s, y0 + .72 * s, cz + .08)];        // tablet
+  for (let i = 0; i < 5; i++) { const a = Math.PI * (.15 + .7 * i / 4); body.push(beam([0, y0 + 1.33 * s, cz], [Math.cos(a) * .2 * s, y0 + 1.33 * s + Math.sin(a) * .2 * s, cz], .012 * s)); }
+  addMesh(p, merge(body), G, [0, 0, 0], { order: 10, threshold: 35 });
+  addMesh(p, new THREE.ConeGeometry(.07 * s, .18 * s, 6).translate(.3 * s, y0 + 1.86 * s, cz), '#ffcf3f', [0, 0, 0], { order: 11, threshold: 50 });
+}
+
+function brooklynBridge(api, x0, x1, z, s = 1) {
+  const { makePiece, addMesh } = api;
+  const p = makePiece((x0 + x1) / 2, z, { order: 18, popOrder: 6 });
+  const L = x1 - x0, D = .45 * s, cz = -D / 2, dy = .55 * s, th = 2.4 * s;
+  const tx = [-L * .27, L * .27];
+  addMesh(p, box(L, .1 * s, D, 0, dy, cz), '#8d6e63', [0, 0, 0], { order: 19 });
+  const towers = [], cables = [];
+  for (const t of tx) {
+    towers.push(box(.6 * s, th, D + .1, t, th / 2, cz));
+    // two gothic openings (extra lines)
+    for (const o of [-.14, .14]) {
+      const ox = t + o * s;
+      cables.push([[ox - .07 * s, dy + .1 * s, .06], [ox - .07 * s, th * .72, .06]], [[ox + .07 * s, dy + .1 * s, .06], [ox + .07 * s, th * .72, .06]],
+                  [[ox - .07 * s, th * .72, .06], [ox, th * .8, .06]], [[ox, th * .8, .06], [ox + .07 * s, th * .72, .06]]);
+    }
+  }
+  // main cables: parabola between towers + to the ends, plus vertical suspenders
+  const cab = (xa, xb, ya, yb, sag) => {
+    const n = 14; let prev = null;
+    for (let i = 0; i <= n; i++) {
+      const t = i / n, xx = xa + (xb - xa) * t, yy = ya + (yb - ya) * t - sag * 4 * t * (1 - t);
+      const pt = [xx, yy, .05];
+      if (prev) cables.push([prev, pt]);
+      if (i % 2 === 1) cables.push([pt, [xx, dy + .1 * s, .05]]);
+      prev = pt;
+    }
+  };
+  cab(tx[0], tx[1], th * .95, th * .95, th * .7);
+  cab(-L / 2, tx[0], dy + .15, th * .95, -.1);
+  cab(tx[1], L / 2, th * .95, dy + .15, -.1);
+  addMesh(p, merge(towers), '#c9a27e', [0, 0, 0], { order: 18, extra: cables });
+}
+
+function taxi(api, x, z) {
+  const { makePiece, addMesh } = api;
+  const p = makePiece(x, z, { order: 44, popOrder: 7 });
+  addMesh(p, merge([box(.55, .16, .28, 0, .11, -.14), box(.32, .13, .24, -.02, .25, -.14)]), '#f7c600', [0, 0, 0], { order: 44 });
+  addMesh(p, merge([-.17, .17].map(wx => new THREE.CylinderGeometry(.06, .06, .3, 8).rotateX(Math.PI / 2).translate(wx, .05, -.14))), '#222', [0, 0, 0], { order: 45, threshold: 50 });
+}
+
+function newYork(api) {
+  const r = rng(31);
+  const S = api.short;
+  const cfg = { sky: '#ffd3a8', sun: '#ff8c42', sunPos: [S ? 3.2 : 6, 3.9], clouds: S ? 4 : 5, groundColor: '#bdbdbd', water: '#3f7fb5', waterFrom: 3.3 };
+  skyCard(api, cfg, r);
+  groundCard(api, cfg, r);
+  const k = S ? .62 : 1;
+  const E = 0, C = -2.7 * k, WTC = 3.0 * k;
+  const keep = [[C - .7, C + .7], [E - .8, E + .8], [WTC - .7, WTC + .7]];
+  const walls = ['#b0b7bf', '#c9bba3', '#9e9e9e', '#d6cfc2', '#a1887f', '#8d99a6'];
+  const glass = ['#7fa7c9', '#6c93b8', '#9bb8cf'];
+  skylineRow(api, r, .85, .45, [3.2, 6.2], X0 + .05, X1 - .05, { wMin: .6, wMax: 1.0, walls, glassWalls: glass, win: '#ffe7a3', order: 30 }, keep);
+  empireState(api, E, 1.45, 1.05);
+  chrysler(api, C, 1.4, .95);
+  oneWTC(api, WTC, 1.5, 1.0);
+  skylineRow(api, r, 2.0, .45, [1.8, 3.4], X0 + .05, X1 - .05, { wMin: .55, wMax: .95, walls, glassWalls: glass, win: '#ffe7a3', order: 22 }, [[E - .55, E + .55]]);
+  skylineRow(api, r, 2.6, .4, [.9, 1.7], X0 + .05, X1 - .05, { wMin: .5, wMax: .85, walls: ['#c46b4e', '#a0522d', '#d9a066', '#b4553f'], glassWalls: glass, win: '#ffe7a3', order: 26 }, []);
+  for (let i = 0; i < (S ? 3 : 5); i++) taxi(api, X0 + .8 + r() * (X1 - X0 - 1.6), 3.05);
+  for (let i = 0; i < (S ? 3 : 5); i++) tree(api, X0 + .5 + r() * (X1 - X0 - 1), 2.9, .7, r);
+  brooklynBridge(api, S ? -.6 : 1.0, X1 - .1, 4.0, S ? .8 : 1.0);
+  liberty(api, S ? -2.9 : -5.0, 5.9, S ? 1.15 : 1.35);
+  boat(api, S ? 2.6 : 3.2, 5.6);
+}
+
 export const CITIES = {
+  newyork: {
+    title: 'NEW YORK', subtitle: 'USA',
+    layout: { short: { X0: -5.4, X1: 5.4, ZTOP: -11.5, ZBOT: 6.6 }, wide: { X0: -8.6, X1: 8.6, ZTOP: -9, ZBOT: 6.6 } },
+    camScale: 1.45,
+    timing: { draw: 55, color: 50, pop: 8, orbit: 14, hook: 3.5 },
+    build: newYork,
+  },
   paris: {
     title: 'PARIS', subtitle: 'France',
     build(api) {

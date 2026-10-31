@@ -11,14 +11,16 @@ import { CITIES, setLayout, LAYOUT } from './cities.js';
 const Q = new URLSearchParams(location.search);
 const W = +Q.get('w') || 1920, H = +Q.get('h') || 1080;
 const FPS = +Q.get('fps') || 30;
-const T = {
-  hook: +(Q.get('hook') ?? 3), rewind: +(Q.get('rewind') ?? 1.8), blank: 0.5,
-  draw: +(Q.get('draw') ?? 30), color: +(Q.get('color') ?? 30),
-  pop: +(Q.get('pop') ?? 5), orbit: +(Q.get('orbit') ?? 7),
-};
+
 const CITY = CITIES[Q.get('city') || 'paris'];
 const SHORT = H > W;
-setLayout(SHORT);
+setLayout(SHORT, CITY.layout);
+const TD = CITY.timing || {};
+const T = {
+  hook: +(Q.get('hook') ?? TD.hook ?? 3), rewind: +(Q.get('rewind') ?? 1.8), blank: 0.5,
+  draw: +(Q.get('draw') ?? TD.draw ?? 30), color: +(Q.get('color') ?? TD.color ?? 30),
+  pop: +(Q.get('pop') ?? TD.pop ?? 5), orbit: +(Q.get('orbit') ?? TD.orbit ?? 7),
+};
 const INK = 0x26242c;
 const PAPER = new THREE.Color('#f7f4ec');
 const SQUASH = 0.015, LAYER = 0.012;
@@ -40,7 +42,7 @@ const sun = new THREE.DirectionalLight(0xffffff, 1.9);
 sun.position.set(-5, 13, 14);
 sun.castShadow = true;
 sun.shadow.mapSize.set(2048, 2048);
-Object.assign(sun.shadow.camera, { left: -13, right: 13, top: 13, bottom: -13, near: 1, far: 50 });
+Object.assign(sun.shadow.camera, { left: -16, right: 16, top: 16, bottom: -16, near: 1, far: 60 });
 sun.shadow.bias = -0.0008;
 sun.shadow.radius = 4;
 scene.add(sun);
@@ -183,10 +185,19 @@ scene.updateMatrixWorld(true);
 const allMeshes = pieces.flatMap(p => p.meshes);
 
 // ---------------------------------------------------------------- cameras
-const camTopPos = SHORT ? new THREE.Vector3(0, 25, PZ + 5.5) : new THREE.Vector3(0, 14.6, 4.6);
-const camTopLook = SHORT ? new THREE.Vector3(0, 0, PZ + 0.2) : new THREE.Vector3(0, 0, 0.35);
-const orbitTarget = SHORT ? new THREE.Vector3(0, 3.6, 0.6) : new THREE.Vector3(0, 2.5, 0.4);
-const OR = SHORT ? 17 : 15, OH = SHORT ? 4.2 : 4.4;
+const CS = CITY.camScale || 1;
+let camTopPos, camTopLook;
+if (!CITY.layout) {
+  camTopPos = SHORT ? new THREE.Vector3(0, 25, PZ + 5.5) : new THREE.Vector3(0, 14.6, 4.6);
+  camTopLook = SHORT ? new THREE.Vector3(0, 0, PZ + 0.2) : new THREE.Vector3(0, 0, 0.35);
+} else {   // fit the whole paper
+  const tf = Math.tan(THREE.MathUtils.degToRad(18));
+  const dist = 0.92 * Math.max((PW / 2 + 0.3) / (tf * W / H), (PH / 2 + 0.3) / tf);
+  camTopLook = new THREE.Vector3(0, 0, PZ + 0.2);
+  camTopPos = camTopLook.clone().add(new THREE.Vector3(0, dist * 0.976, dist * 0.215));
+}
+const orbitTarget = (SHORT ? new THREE.Vector3(0, 3.6, 0.6) : new THREE.Vector3(0, 2.5, 0.4)).multiply(new THREE.Vector3(1, CS, 1));
+const OR = (SHORT ? 17 : 15) * CS, OH = (SHORT ? 4.2 : 4.4) * CS;
 function orbitPos(a, r = OR, h = OH) {
   return new THREE.Vector3(orbitTarget.x + Math.sin(a) * r, h, orbitTarget.z + Math.cos(a) * r);
 }
