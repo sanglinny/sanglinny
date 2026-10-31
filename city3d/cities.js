@@ -490,7 +490,44 @@ function newYork(api) {
   boat(api, S ? 2.6 : 3.2, 5.6);
 }
 
+// ------------------------------------------------------------- New York shorts: one district per episode
+function nyEpisode(api, o) {
+  const r = rng(o.seed);
+  const S = api.short, k = S ? .58 : 1;
+  const cfg = { sky: o.sky, sun: o.sun, sunPos: o.sunPos || [4.8, 3.6], clouds: 3, ground: o.ground || 'river',
+                groundColor: o.groundColor || '#bdbdbd', water: '#3f7fb5', waterFrom: o.waterFrom ?? 3.3 };
+  skyCard(api, cfg, r);
+  groundCard(api, cfg, r);
+  const walls = ['#b0b7bf', '#c9bba3', '#9e9e9e', '#d6cfc2', '#a1887f', '#8d99a6'];
+  const glass = ['#7fa7c9', '#6c93b8', '#9bb8cf'];
+  const keep = (o.keep || [[-1, 1]]).map(([a, b]) => [a * k, b * k]);
+  if (o.back !== false) skylineRow(api, r, .85, .4, o.backH || [2.4, 4.4], X0 + .05, X1 - .05, { wMin: .55, wMax: .9, walls, glassWalls: glass, win: '#ffe7a3', order: 30 }, keep);
+  if (o.mid) skylineRow(api, r, 1.6, .4, o.midH || [1.6, 2.8], X0 + .05, X1 - .05, { wMin: .5, wMax: .85, walls, glassWalls: glass, win: '#ffe7a3', order: 24 }, keep);
+  if (o.front) skylineRow(api, r, 2.35, .4, [.9, 1.6], X0 + .05, X1 - .05, { wMin: .5, wMax: .8, walls: ['#c46b4e', '#a0522d', '#d9a066', '#b4553f'], glassWalls: glass, win: '#ffe7a3', order: 26 }, o.frontKeep ? o.frontKeep.map(([a, b]) => [a * k, b * k]) : []);
+  for (let i = 0; i < (o.taxis || 0); i++) taxi(api, X0 + .7 + r() * (X1 - X0 - 1.4), 2.95);
+  for (let i = 0; i < (o.trees || 0); i++) tree(api, X0 + .5 + r() * (X1 - X0 - 1), 2.75, .7, r);
+  if (o.boat) boat(api, o.boat * k, 4.0);
+  o.hero(api, k);
+}
+const NY_TIMING = { draw: 24, color: 20, pop: 5, orbit: 7, hook: 3 };
+const nySub = (n, name) => `Part ${n} · ${name}`;
+
 export const CITIES = {
+  ny1: { title: 'NEW YORK', subtitle: nySub(1, 'Statue of Liberty'), timing: NY_TIMING,
+    build: api => nyEpisode(api, { seed: 41, sky: '#a9d4f5', sun: '#ffd34e', waterFrom: 1.0, back: true, backH: [1.2, 2.6], keep: [],
+      boat: 3.0, hero: (api, k) => liberty(api, -.3 * k, 3.3, 2.3) }) },
+  ny2: { title: 'NEW YORK', subtitle: nySub(2, 'Empire State'), timing: NY_TIMING,
+    build: api => nyEpisode(api, { seed: 42, sky: '#ffd3a8', sun: '#ff8c42', ground: 'street', groundColor: '#c8c2b8', waterFrom: 3.3,
+      backH: [2.6, 4.6], keep: [[-1.1, 1.1]], front: true, frontKeep: [[-1.2, 1.2]], taxis: 4, hero: (api, k) => empireState(api, 0, 1.6, 1.15) }) },
+  ny3: { title: 'NEW YORK', subtitle: nySub(3, 'Chrysler Building'), timing: NY_TIMING,
+    build: api => nyEpisode(api, { seed: 43, sky: '#c7b8ea', sun: '#ffb86b', ground: 'street', groundColor: '#c8c2b8', waterFrom: 3.3,
+      backH: [2.6, 4.4], keep: [[-1, 1]], front: true, frontKeep: [[-1, 1]], taxis: 4, hero: (api, k) => chrysler(api, 0, 1.6, 1.3) }) },
+  ny4: { title: 'NEW YORK', subtitle: nySub(4, 'One World Trade Center'), timing: NY_TIMING,
+    build: api => nyEpisode(api, { seed: 44, sky: '#9fd0f0', sun: '#ffe066', waterFrom: 2.9, backH: [2.2, 4.0], keep: [[-1.1, 1.1]], mid: true, midH: [1.4, 2.6],
+      boat: 3.4, hero: (api, k) => oneWTC(api, 0, 2.2, 1.0) }) },
+  ny5: { title: 'NEW YORK', subtitle: nySub(5, 'Brooklyn Bridge'), timing: NY_TIMING,
+    build: api => nyEpisode(api, { seed: 45, sky: '#ffc2a1', sun: '#ff7b54', waterFrom: 2.0, backH: [2.0, 4.6], keep: [], mid: true, midH: [1.2, 2.4],
+      boat: -2.6, hero: (api, k) => brooklynBridge(api, X0 + .1, X1 - .1, 3.0, api.short ? 1.15 : 1.4) }) },
   newyork: {
     title: 'NEW YORK', subtitle: 'USA',
     layout: { short: { X0: -5.4, X1: 5.4, ZTOP: -11.5, ZBOT: 6.6 }, wide: { X0: -8.6, X1: 8.6, ZTOP: -9, ZBOT: 6.6 } },
