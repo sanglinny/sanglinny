@@ -527,7 +527,7 @@ export const CITIES = {
       boat: 3.4, hero: (api, k) => oneWTC(api, 0, 2.2, 1.0) }) },
   ny5: { title: 'NEW YORK', subtitle: nySub(5, 'Brooklyn Bridge'), timing: NY_TIMING,
     build: api => nyEpisode(api, { seed: 45, sky: '#ffc2a1', sun: '#ff7b54', waterFrom: 2.0, backH: [2.0, 4.6], keep: [], mid: true, midH: [1.2, 2.4],
-      boat: -2.6, hero: (api, k) => brooklynBridge(api, X0 + .1, X1 - .1, 3.0, api.short ? 1.15 : 1.4) }) },
+      boat: -2.6, hero: (api, k) => brooklynBridge(api, X0 + .7, X1 - .7, 3.0, api.short ? 1.0 : 1.4) }) },
   newyork: {
     title: 'NEW YORK', subtitle: 'USA',
     layout: { short: { X0: -5.4, X1: 5.4, ZTOP: -11.5, ZBOT: 6.6 }, wide: { X0: -8.6, X1: 8.6, ZTOP: -9, ZBOT: 6.6 } },

@@ -42,7 +42,9 @@ const server = http.createServer((req, res) => {
   const fps = info.fps / every;
   const tmpVideo = out.replace(/\.mp4$/, '.video.mp4');
   const ff = spawn('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'image2pipe', '-c:v', 'mjpeg', '-r', String(fps), '-i', '-',
-    '-c:v', 'libx264', '-preset', 'medium', '-crf', '18', '-pix_fmt', 'yuv420p', tmpVideo], { stdio: ['pipe', 'inherit', 'inherit'] });
+    '-vf', 'scale=trunc(iw/2)*2:trunc(ih/2)*2', '-c:v', 'libx264', '-preset', 'medium', '-crf', '18', '-pix_fmt', 'yuv420p', tmpVideo], { stdio: ['pipe', 'inherit', 'inherit'] });
+  let ffDead = false;
+  ff.on('close', c => { if (c) { ffDead = true; console.error('ffmpeg exited with', c); process.exit(1); } });
   const acts = [];
   const N = Math.min(info.total, limit);
   for (let i = 0; i < N; i += every) {
