@@ -1,0 +1,28 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  @font-face { font-family: Baloo; src: url(../assets/fonts/Baloo2-ExtraBold.ttf); }
+  @font-face { font-family: Hand; src: url(../assets/fonts/PatrickHand-Regular.ttf); }
+  html, body { margin: 0; padding: 0; overflow: hidden; background: #000; }
+  canvas { display: block; }
+  #title { position: absolute; left: 0; right: 0; top: 7%; text-align: center; font-family: Baloo; color: #fff;
+           -webkit-text-stroke: 0.09em #1e1e28; paint-order: stroke fill; text-shadow: 0.06em 0.08em 0 rgba(0,0,0,.3);
+           line-height: 1; opacity: 0; pointer-events: none; }
+  #title .sub { font-family: Hand; -webkit-text-stroke: 0.06em #1e1e28; font-size: 42%; display: block; margin-top: .15em; }
+  #badge { position: absolute; top: 3.2%; right: 2.6%; background: rgba(20,20,24,.72); color: #fff; font-family: Baloo;
+           border-radius: 999px; padding: .12em .7em .02em .55em; opacity: 0; display: flex; gap: .3em; align-items: center; }
+  #badge svg { height: .8em; }
+</style>
+<script type="importmap">
+{ "imports": { "three": "./node_modules/three/build/three.module.js",
+               "three/addons/": "./node_modules/three/examples/jsm/" } }
+</script>
+</head>
+<body>
+<div id="title"></div>
+<div id="badge"><svg id="ico" viewBox="0 0 20 10"></svg><span id="btxt"></span></div>
+<script type="module" src="./app.js"></script>
+</body>
+</html>

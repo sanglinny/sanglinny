@@ -18,7 +18,7 @@ def _env(acts, fps, value, n, smooth=0.03):
     return np.convolve(e, np.ones(k) / k, mode="same")
 
 
-def make_soundtrack(path, acts, fps, sfx=True, rewind_start=0.0, rewind_len=1.5, seed=3):
+def make_soundtrack(path, acts, fps, sfx=True, rewind_start=0.0, rewind_len=1.5, seed=3, pops=()):
     n = int(len(acts) / fps * SR) + SR // 10
     rng = np.random.default_rng(seed)
     out = np.zeros(n)
@@ -48,5 +48,13 @@ def make_soundtrack(path, acts, fps, sfx=True, rewind_start=0.0, rewind_len=1.5,
                 tt = np.arange(L) / SR
                 bell = (np.sin(2 * np.pi * f0 * tt) + .4 * np.sin(2 * np.pi * f0 * 2.01 * tt)) * np.exp(-tt * 4)
                 out[s:s + L] += 0.18 * bell
+        # paper pop-up "flap" for each piece folding up
+        for k, tp in enumerate(pops):
+            s0 = int(tp * SR)
+            L = int(0.09 * SR)
+            if 0 <= s0 < n - L:
+                tt = np.arange(L) / SR
+                burst = _band(rng.normal(0, 1, L), 300 + 40 * (k % 7), 2500) * np.exp(-tt * 45)
+                out[s0:s0 + L] += 0.35 * burst
     out = np.clip(out, -1, 1)
     wavfile.write(path, SR, (np.stack([out, out], 1) * 32767).astype(np.int16))

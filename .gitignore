@@ -1,3 +1,5 @@
 output/
 __pycache__/
 *.pyc
+node_modules/
+city3d/package-lock.json

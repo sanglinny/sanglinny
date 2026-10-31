@@ -1,0 +1,17 @@
+{
+  "name": "city3d",
+  "version": "1.0.0",
+  "description": "3D pop-up city drawing timelapse renderer",
+  "main": "render.js",
+  "scripts": {
+    "render": "node render.js"
+  },
+  "license": "ISC",
+  "dependencies": {
+    "three": "^0.170.0"
+  },
+  "private": true,
+  "devDependencies": {
+    "playwright": "^1.48.0"
+  }
+}

@@ -72,3 +72,32 @@ assets/fonts/           Baloo 2 + Patrick Hand (SIL OFL, hỗ trợ tiếng Vi�
 - **Hook 2 giây đầu là sống còn:** giữ tranh màu thật rực, tên thành phố to. Có thể đặt câu hỏi ở outro ("Comment the next city!") để lấy bình luận → chọn thành phố kế tiếp theo bình luận.
 - **Series:** "Thủ đô châu Á", "Thành phố Việt Nam" (Đà Nẵng – Cầu Rồng, Huế – Kỳ Đài, TP.HCM – Landmark 81 / Bưu điện…), "Kỳ quan thế giới".
 - **Không lời thoại** → khán giả toàn cầu; chỉ cần đổi `--title/--subtitle`.
+
+---
+
+# Phiên bản 3D – thành phố pop-up (`city3d/`)
+
+Cùng kịch bản kênh, nhưng toàn bộ dựng 3D bằng three.js:
+
+1. **Hook:** mô hình thành phố 3D hoàn chỉnh đứng trên tờ giấy, camera bay vòng quanh + tên thành phố.
+2. **Tua ngược ⏪:** nhà gập xuống, mất màu, mất nét → **giấy trắng**.
+3. **Vẽ:** bút chì 3D (có bóng đổ trên giấy) vẽ nét các tấm pop-up đang nằm phẳng, tua nhanh ⏩.
+4. **Tô màu:** bút dạ 3D đổi màu theo từng mảng, tô qua lại.
+5. **Pop-up:** từng mảng **bật đứng dậy** như sách pop-up (có tiếng giấy "phựt"), trời gập lên thành phông nền, camera hạ xuống và bay vòng quanh mô hình 3D, hiện tên thành phố.
+
+```bash
+cd city3d
+npm install                 # three.js (+ playwright nếu máy chưa có)
+npx playwright install chromium   # chỉ cần nếu máy chưa có Chromium cho Playwright
+node render.js --city paris                 # 1920x1080 → output/paris_3d.mp4
+node render.js --city hanoi --short         # 1080x1920 Shorts
+node render.js --city tokyo --draw 40 --color 40 --orbit 10 --music nhac.mp3
+```
+
+Tùy chọn: `--draw/--color/--pop/--orbit/--hook/--rewind` (giây), `--speed x16` (chữ trên huy hiệu), `--music`, `--w/--h`.
+Xem nhanh bản nháp: `--w 960 --h 540 --every 10` (chỉ render 1/10 khung hình).
+
+Thành phố 3D có sẵn: `paris`, `london`, `tokyo`, `hanoi` — sửa/thêm trong `city3d/cities.js`
+(landmark 3D: `eiffel`, `clockTower`, `pagoda`, `mountain`, `ferrisWheel`, `domeChurch`, `turtleTower`, nhà phố tự sinh `rowOfBuildings`).
+
+Thời gian render (CPU, không GPU): khoảng 0.4–0.6 giây/khung hình ở 1080p → video 75 giây mất ~20 phút. Máy có GPU sẽ nhanh hơn nhiều.
