@@ -89,8 +89,8 @@ Cùng kịch bản kênh, nhưng toàn bộ dựng 3D bằng three.js:
 cd city3d
 npm install                 # three.js (+ playwright nếu máy chưa có)
 npx playwright install chromium   # chỉ cần nếu máy chưa có Chromium cho Playwright
-node render.js --city paris                 # 1920x1080 → output/paris_3d.mp4
-node render.js --city hanoi --short         # 1080x1920 Shorts
+node render.js --city paris                 # 9:16 (mặc định) → output/paris_3d_short.mp4
+node render.js --city hanoi --wide          # 16:9 ngang 1920x1080
 node render.js --city tokyo --draw 40 --color 40 --orbit 10 --music nhac.mp3
 ```
 

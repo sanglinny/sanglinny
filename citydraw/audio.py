@@ -24,16 +24,27 @@ def make_soundtrack(path, acts, fps, sfx=True, rewind_start=0.0, rewind_len=1.5,
     out = np.zeros(n)
     if sfx:
         t = np.arange(n) / SR
-        # pencil: bright grainy noise, amplitude flutter from hand motion
-        pen = _band(rng.normal(0, 1, n), 2200, 7500)
-        flutter = 0.55 + 0.45 * np.abs(np.sin(2 * np.pi * 7.3 * t + 2 * np.sin(2 * np.pi * 0.9 * t)))
-        grain = _band(rng.normal(0, 1, n), 20, 60)
-        grain = 0.7 + 0.6 * grain / (np.abs(grain).max() + 1e-9)
-        out += 0.16 * pen * flutter * grain * _env(acts, fps, 1, n)
-        # marker: softer, lower, a little squeaky
-        mk = _band(rng.normal(0, 1, n), 500, 2600)
-        sw = 0.6 + 0.4 * np.abs(np.sin(2 * np.pi * 4.1 * t))
-        out += 0.13 * mk * sw * _env(acts, fps, 2, n)
+        # pencil: hand strokes back and forth (~4-6 per second), each stroke a
+        # burst of graphite scratch + crackly grain; loud enough to be heard
+        def strokes(rate, jitter, sharp):
+            f = rate * (1 + jitter * _band(rng.normal(0, 1, n), 0.2, 2.0) * 3)
+            ph = np.cumsum(f / SR)
+            env = np.abs(np.sin(np.pi * ph)) ** sharp
+            amp = np.repeat(rng.uniform(0.55, 1.0, int(ph[-1]) + 2), 1)[ph.astype(int)]
+            return env * amp
+        pen_env = _env(acts, fps, 1, n, smooth=0.015)
+        scratch = _band(rng.normal(0, 1, n), 1400, 6500) + 0.45 * _band(rng.normal(0, 1, n), 350, 1400)
+        grain = np.zeros(n)
+        idx = rng.integers(0, n, int(n / SR * 420))
+        grain[idx] = rng.uniform(-1, 1, len(idx))
+        grain = _band(grain, 2500, 9000) * 6
+        pencil = (scratch * (0.35 + 0.65 * strokes(4.8, 0.25, 0.7)) + grain) * pen_env
+        out += 0.55 * pencil
+        # marker: softer felt tip, slower strokes with a little squeak
+        mk_env = _env(acts, fps, 2, n, smooth=0.02)
+        felt = _band(rng.normal(0, 1, n), 500, 3000) + 0.3 * _band(rng.normal(0, 1, n), 3000, 7000)
+        squeak = np.sin(2 * np.pi * np.cumsum(1800 + 300 * np.sin(2 * np.pi * 0.7 * t)) / SR) * 0.08
+        out += 0.75 * (felt * (0.3 + 0.7 * strokes(3.2, 0.2, 1.2)) + squeak * strokes(3.2, 0.2, 4)) * mk_env
         # rewind whoosh: band-passed noise with rising tone
         e = _env(acts, fps, 3, n, smooth=0.12)
         if e.max() > 0:
@@ -56,5 +67,8 @@ def make_soundtrack(path, acts, fps, sfx=True, rewind_start=0.0, rewind_len=1.5,
                 tt = np.arange(L) / SR
                 burst = _band(rng.normal(0, 1, L), 300 + 40 * (k % 7), 2500) * np.exp(-tt * 45)
                 out[s0:s0 + L] += 0.35 * burst
+    peak = np.abs(out).max()
+    if peak > 0:
+        out *= 0.89 / peak          # normalise to -1 dBFS
     out = np.clip(out, -1, 1)
     wavfile.write(path, SR, (np.stack([out, out], 1) * 32767).astype(np.int16))

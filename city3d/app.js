@@ -146,7 +146,7 @@ function lineMat(width, opacity = 1) {
 // ---------------------------------------------------------------- tools
 function cyl(rt, rb, h, seg, color, y) {
   const m = new THREE.Mesh(new THREE.CylinderGeometry(rt, rb, h, seg), new THREE.MeshLambertMaterial({ color }));
-  m.position.y = y; m.castShadow = true; return m;
+  m.position.y = y; m.castShadow = false; return m;   // tools cast no shadow
 }
 function makePencil() {
   const g = new THREE.Group(), inner = new THREE.Group();

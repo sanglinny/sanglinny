@@ -8,7 +8,7 @@ const { chromium } = require('playwright');
 const args = Object.fromEntries(process.argv.slice(2).reduce((a, v, i, arr) => {
   if (v.startsWith('--')) a.push([v.slice(2), arr[i + 1] && !arr[i + 1].startsWith('--') ? arr[i + 1] : true]); return a; }, []));
 const city = args.city || 'paris';
-const short = !!args.short;
+const short = !args.wide;          // 9:16 by default, --wide for 16:9
 const W = +(args.w || (short ? 1080 : 1920)), H = +(args.h || (short ? 1920 : 1080));
 const ROOT = path.resolve(__dirname, '..');
 const out = path.resolve(args.out || path.join(ROOT, 'output', `${city}_3d${short ? '_short' : ''}.mp4`));
